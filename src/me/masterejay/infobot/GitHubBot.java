@@ -2,6 +2,7 @@ package me.masterejay.infobot;
 
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -14,6 +15,7 @@ import com.yetanotherx.reddit.api.data.LinkData;
 import com.yetanotherx.reddit.api.modules.ExternalDomain;
 import com.yetanotherx.reddit.api.modules.RedditCore;
 import com.yetanotherx.reddit.api.modules.RedditLink;
+import com.yetanotherx.reddit.exception.APIException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -43,7 +45,7 @@ public class GitHubBot extends RedditPlugin {
 			//System.out.println(link.getTitle());
 			try {
 			if (!newLin.getLinkData().getSubreddit().equals("test")){
-				throw new Error("Debug error!");
+				//throw new Error("Debug error!");
 			}
 			for (CommentData cd : newLin.getComments()){
 				if (cd.getAuthor().equals(username)){
@@ -55,7 +57,7 @@ public class GitHubBot extends RedditPlugin {
 			}
 			catch(Error e){
 				System.out.println(e.getMessage());
-				Thread.sleep(1000);
+				Thread.sleep(2000);
 				continue;
 			}
 
@@ -86,6 +88,10 @@ public class GitHubBot extends RedditPlugin {
 
 					jsonResult = result1.toString();
 				}
+			}catch (FileNotFoundException e){
+				System.out.println(e.getMessage());
+				continue;
+
 			}catch(IOException e){
 				e.printStackTrace();
 			}
@@ -98,7 +104,13 @@ public class GitHubBot extends RedditPlugin {
 				e.printStackTrace();
 			}
 			JSONObject jsonObj = (JSONObject) obj;
-			String language = jsonObj.get("language").toString();
+			String language;
+			if (jsonObj.get("language") != null){
+				language = jsonObj.get("language").toString();
+			}
+		    else {
+				language = "None";
+			}
 			String forks = jsonObj.get("forks_count").toString();
 			String watchers = jsonObj.get("watchers_count").toString();
 			String stars =  jsonObj.get("stargazers_count").toString();
@@ -134,10 +146,19 @@ public class GitHubBot extends RedditPlugin {
 			sb.append(stars);
 			sb.append("\n\n");
 
-			newLin.doReply(sb.toString());
+
+			try {
+				newLin.doReply(sb.toString());
+			}
+			catch (APIException e){
+				System.out.println(e.getMessage());
+				Thread.sleep(250000);
+				continue;
+			}
+
 
 		}
-		int WAIT_TIME = 5000;
+		int WAIT_TIME = 250000;
 		System.out.println("Welp, thats a wrap! Running again in " + WAIT_TIME + " milliseconds!");
 		Thread.sleep(WAIT_TIME);
 		run();
